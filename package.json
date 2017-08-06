@@ -1,0 +1,35 @@
+{
+  "name": "raj-spa",
+  "description": "Single Page Apps for Raj",
+  "version": "0.0.1",
+  "author": "Chris Andrejewski <christopher.andrejewski@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/andrejewski/raj-spa/issues"
+  },
+  "dependencies": {
+    "raj": "0.0.6",
+    "tagmeme": "0.0.2"
+  },
+  "devDependencies": {
+    "ava": "^0.19.1",
+    "fixpack": "^2.3.1",
+    "standard": "^10.0.2"
+  },
+  "homepage": "https://github.com/andrejewski/raj-spa#readme",
+  "keywords": [
+    "best",
+    "framework",
+    "react",
+    "runtime"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrejewski/raj-spa.git"
+  },
+  "scripts": {
+    "lint": "fixpack && standard --fix",
+    "test": "npm run lint && ava"
+  }
+}
