@@ -58,9 +58,9 @@ The `raj-spa` package exports a single function which takes the following argume
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `router` | `RajRouter` | The router to which the SPA will subscribe
-| `getRouteProgram` | function | The mapping from routes to programs
-| `initialProgram` | `RajProgram` | The initial program used before the first received route from the router resolves.
+| `router` | `RajRouter` | The router to which the SPA will subscribe.
+| `getRouteProgram` | function | The mapping from routes to programs which receives a route and returns a `RajProgram` or a Promise that resolves as `RajProgram`.
+| `initialProgram` | `RajProgram` | The initial program used before the first received route from the router resolves. The transition to the first route's program should be instantaneous if a static program returns from `getRouteProgram`.
 
 #### Optional configuration
 
@@ -155,4 +155,4 @@ export function containerView (viewContainerModel, subView) {
 }
 ```
 
-Or, you can nest the SPA component in a surrounding program.
+Or, you can nest the SPA component in a surrounding program/component.
