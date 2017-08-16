@@ -9,3 +9,4 @@ deploy:
   on:
     tags: true
     repo: andrejewski/raj-spa
+  skip_cleanup: true
