@@ -36,14 +36,14 @@ function getRouteProgram (route) {
 }
 
 const initialProgram = {
-  init () { return [] },
+  init: [],
   update () { return [] },
   view () {
     return <p>Loading application...</p>
   }
 }
 
-export default program(spa({
+export default program(React.Component, () => spa({
   router,
   getRouteProgram,
   initialProgram
@@ -59,14 +59,14 @@ The `raj-spa` package exports a single function which takes the following argume
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | `router` | `RajRouter` | The router to which the SPA will subscribe.
-| `getRouteProgram` | function | The mapping from routes to programs which receives a route and returns a `RajProgram` or a Promise that resolves as `RajProgram`.
+| `getRouteProgram` | `route => RajProgram` | The mapping from routes to programs which receives a route and returns a `RajProgram` or a Promise that resolves as `RajProgram`.
 | `initialProgram` | `RajProgram` | The initial program used before the first received route from the router resolves. The transition to the first route's program should be instantaneous if a static program returns from `getRouteProgram`.
 
 #### Optional configuration
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `errorProgram` | `RajProgram` | The program to use when a program rejects with an error. `errorProgram.init` receives the error.
+| `errorProgram` | `Error => RajProgram` | The program to use when a program rejects with an error. `errorProgram` receives the error and returns a `RajProgram`.
 | `viewContainer` | function | A container view which wraps the entire application. The function will receive a `ViewContainerModel` and the sub program's `view` result to encapsulate.
 
 #### Types
@@ -76,7 +76,7 @@ This is a normal Raj configuration.
 
 ```
 interface RajProgram {
-  init: function(props);
+  init: [model, effect];
   update: function(msg, state);
   view: function(state, dispatch);
 }

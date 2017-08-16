@@ -1,3 +1,11 @@
 language: node_js
 node_js:
 - node
+deploy:
+  provider: npm
+  email: christopher.andrejewski@gmail.com
+  api_key:
+    secure: cRYXNpuujOye3WlY9Y6xS3nO3mo6m/98HUVSe1hUTl5dVYDCTKjEIdh0w09rAr++1946XjPWwBSf4Cb11Sylh1YSbYS+aw7K+j+KwNs+egBXqap+XguDh15mWo/PQguPPi/Ck+dNsrvgElPOX6Nr18I+gcbpIF4yCIotao8IGyQlx7hriyhgx9wFcArzqZ0W54ErXWnewEjqO9hB6fmad1kj7QZ0nOrVhV8vLWaVmprFsHOqzSP2ax8aOGuu3JtVSnWh+5xYhQhoi+/XH6QuYsy19P2Esn4wh6fv1gEgbKUhf1WevUDqxws2DB/3TRLubDCfsnHgaOBVXB7/cNtXJDngbbi06DUucy5BDUDqfJEWvAs588Tpa+2IXmpfx0PgfAQYPFqmjiHkOI+NCRkyIaf6TEO6ABkkFnOEYa7nBC3cR3moNJQ0T002zmKknnena04WRfGrOCJKRhxLCLnu+CEjfnFs8qpwYNWG1vHrLq1mFHTEtyiAgYxW/YBW77nYfZYuuCFOSlZBO0ADNB+PwpvApLgizsPYjgHhstUyLkuNm/u3N1g55kCbyDYrx5HhTxMcijHmZcm/APqcqgr4bNQz8KndE6BrrPBUdrSYgAtHKHLXvGX//xsZZYj00W+qGagZXqkKehFr5UUpFvCb8H2Cs9YkTNpqYC1Rrq5hYaw=
+  on:
+    tags: true
+    repo: andrejewski/raj-spa
