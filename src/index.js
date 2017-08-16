@@ -1,5 +1,5 @@
 const tag = require('tagmeme')
-const effects = require('raj/effects')
+const effects = require('raj/effect')
 
 const Result = (function () {
   const Err = tag()
@@ -49,11 +49,11 @@ function spa ({
     ProgramMsg
   ])
 
-  function init () {
+  const init = (() => {
     const [
       initialProgramModel,
       initialProgramEffect
-    ] = initialProgram.init()
+    ] = initialProgram.init
     const model = {
       routerCancel: null,
       isTransitioning: false,
@@ -65,13 +65,13 @@ function spa ({
       effects.map(ProgramMsg, initialProgramEffect)
     ])
     return [model, effect]
-  }
+  })()
 
   function transitionToProgram (model, program, props) {
     const [
       newProgramModel,
       newProgramEffect
-    ] = program.init(props)
+    ] = program.init
     const newModel = {
       ...model,
       currentProgram: program,
@@ -102,7 +102,8 @@ function spa ({
           program => transitionToProgram(newModel, program),
           error => {
             if (errorProgram) {
-              return transitionToProgram(newModel, errorProgram, error)
+              const program = errorProgram(error)
+              return transitionToProgram(newModel, program)
             }
             console.error(error)
             return [model]
