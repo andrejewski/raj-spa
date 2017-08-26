@@ -41,6 +41,7 @@
   "scripts": {
     "build": "babel src --out-dir lib",
     "lint": "fixpack && standard --fix",
+    "prepublishOnly": "npm run build",
     "test": "npm run lint && ava"
   }
 }
