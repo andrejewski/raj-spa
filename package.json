@@ -25,6 +25,9 @@
     "fixpack": "^2.3.1",
     "standard": "^10.0.2"
   },
+  "files": [
+    "lib"
+  ],
   "homepage": "https://github.com/andrejewski/raj-spa#readme",
   "keywords": [
     "best",
