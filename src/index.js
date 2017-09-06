@@ -1,5 +1,5 @@
 const tag = require('tagmeme')
-const effects = require('raj/effect')
+const {mapEffect, batchEffects} = require('raj-compose')
 
 const Result = (function () {
   const Err = tag()
@@ -7,24 +7,18 @@ const Result = (function () {
   const Result = tag.union([Err, Ok])
   Result.Err = Err
   Result.Ok = Ok
-  Result.case = (val, errCase, okCase) => {
-    return Result.match(val, [
-      Err, err => errCase(err),
-      Ok, ok => okCase(ok)
-    ])
-  }
   return Result
 })()
 
 function loadProgram (program, programMsg) {
   return function (dispatch) {
     const isPromise = !!(program.then && program.catch)
-    if (isPromise) {
-      return programMsg(Result.Ok(program))
+    if (!isPromise) {
+      return dispatch(programMsg(Result.Ok(program)))
     }
     return program
-      .then(program => programMsg(Result.Ok(program)))
-      .catch(error => programMsg(Result.Err(error)))
+      .then(program => dispatch(programMsg(Result.Ok(program))))
+      .catch(error => dispatch(programMsg(Result.Err(error))))
   }
 }
 
@@ -60,9 +54,9 @@ function spa ({
       currentProgram: initialProgram,
       programModel: initialProgramModel
     }
-    const effect = effects.batch([
+    const effect = batchEffects([
       router.subscribe(GetRoute, GetCancel),
-      effects.map(ProgramMsg, initialProgramEffect)
+      mapEffect(initialProgramEffect, ProgramMsg)
     ])
     return [model, effect]
   })()
@@ -81,9 +75,9 @@ function spa ({
     if (subDone) {
       subDone = subDone(model.programModel)
     }
-    const newEffect = effects.batch([
+    const newEffect = batchEffects([
       subDone,
-      effects.map(ProgramMsg, newProgramEffect)
+      mapEffect(newProgramEffect, ProgramMsg)
     ])
     return [newModel, newEffect]
   }
@@ -98,9 +92,9 @@ function spa ({
       GetCancel, routerCancel => [{...model, routerCancel}],
       GetProgram, program => {
         const newModel = {...model, isTransitioning: false}
-        return Result.case(program,
-          program => transitionToProgram(newModel, program),
-          error => {
+        return Result.match(program, [
+          Result.Ok, program => transitionToProgram(newModel, program),
+          Result.Err, error => {
             if (errorProgram) {
               const program = errorProgram(error)
               return transitionToProgram(newModel, program)
@@ -108,7 +102,7 @@ function spa ({
             console.error(error)
             return [model]
           }
-        )
+        ])
       },
       ProgramMsg, msg => {
         const [
@@ -116,7 +110,7 @@ function spa ({
           newProgramEffect
         ] = model.currentProgram.update(msg, model.programModel)
         const newModel = {...model, programModel: newProgramModel}
-        const newEffect = effects.map(ProgramMsg, newProgramEffect)
+        const newEffect = mapEffect(newProgramEffect, ProgramMsg)
         return [newModel, newEffect]
       }
     ])
@@ -142,7 +136,7 @@ function spa ({
       subDone = subDone(model.page)
     }
 
-    return effects.batch([
+    return batchEffects([
       model.routerCancel,
       subDone
     ])
