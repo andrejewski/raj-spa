@@ -7,24 +7,18 @@ const Result = (function () {
   const Result = tag.union([Err, Ok])
   Result.Err = Err
   Result.Ok = Ok
-  Result.case = (val, errCase, okCase) => {
-    return Result.match(val, [
-      Err, err => errCase(err),
-      Ok, ok => okCase(ok)
-    ])
-  }
   return Result
 })()
 
 function loadProgram (program, programMsg) {
   return function (dispatch) {
     const isPromise = !!(program.then && program.catch)
-    if (isPromise) {
-      return programMsg(Result.Ok(program))
+    if (!isPromise) {
+      return dispatch(programMsg(Result.Ok(program)))
     }
     return program
-      .then(program => programMsg(Result.Ok(program)))
-      .catch(error => programMsg(Result.Err(error)))
+      .then(program => dispatch(programMsg(Result.Ok(program))))
+      .catch(error => dispatch(programMsg(Result.Err(error))))
   }
 }
 
@@ -98,9 +92,9 @@ function spa ({
       GetCancel, routerCancel => [{...model, routerCancel}],
       GetProgram, program => {
         const newModel = {...model, isTransitioning: false}
-        return Result.case(program,
-          program => transitionToProgram(newModel, program),
-          error => {
+        return Result.match(program, [
+          Result.Ok, program => transitionToProgram(newModel, program),
+          Result.Err, error => {
             if (errorProgram) {
               const program = errorProgram(error)
               return transitionToProgram(newModel, program)
@@ -108,7 +102,7 @@ function spa ({
             console.error(error)
             return [model]
           }
-        )
+        ])
       },
       ProgramMsg, msg => {
         const [
