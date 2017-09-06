@@ -1,5 +1,5 @@
 const tag = require('tagmeme')
-const effects = require('raj/effect')
+const {mapEffect, batchEffects} = require('raj-compose')
 
 const Result = (function () {
   const Err = tag()
@@ -54,9 +54,9 @@ function spa ({
       currentProgram: initialProgram,
       programModel: initialProgramModel
     }
-    const effect = effects.batch([
+    const effect = batchEffects([
       router.subscribe(GetRoute, GetCancel),
-      effects.map(ProgramMsg, initialProgramEffect)
+      mapEffect(initialProgramEffect, ProgramMsg)
     ])
     return [model, effect]
   })()
@@ -75,9 +75,9 @@ function spa ({
     if (subDone) {
       subDone = subDone(model.programModel)
     }
-    const newEffect = effects.batch([
+    const newEffect = batchEffects([
       subDone,
-      effects.map(ProgramMsg, newProgramEffect)
+      mapEffect(newProgramEffect, ProgramMsg)
     ])
     return [newModel, newEffect]
   }
@@ -110,7 +110,7 @@ function spa ({
           newProgramEffect
         ] = model.currentProgram.update(msg, model.programModel)
         const newModel = {...model, programModel: newProgramModel}
-        const newEffect = effects.map(ProgramMsg, newProgramEffect)
+        const newEffect = mapEffect(newProgramEffect, ProgramMsg)
         return [newModel, newEffect]
       }
     ])
@@ -136,7 +136,7 @@ function spa ({
       subDone = subDone(model.page)
     }
 
-    return effects.batch([
+    return batchEffects([
       model.routerCancel,
       subDone
     ])
