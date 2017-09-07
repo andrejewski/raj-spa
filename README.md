@@ -1,5 +1,7 @@
 # Raj SPA
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/andrejewski/raj-spa.svg)](https://greenkeeper.io/)
+
 > Single Page Apps for [Raj](https://github.com/andrejewski/raj)
 
 ```sh
