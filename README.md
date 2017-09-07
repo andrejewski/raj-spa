@@ -1,7 +1,4 @@
 # Raj SPA
-
-[![Greenkeeper badge](https://badges.greenkeeper.io/andrejewski/raj-spa.svg)](https://greenkeeper.io/)
-
 > Single Page Apps for [Raj](https://github.com/andrejewski/raj)
 
 ```sh
@@ -10,6 +7,7 @@ npm install raj-spa
 
 [![npm](https://img.shields.io/npm/v/raj-spa.svg)](https://www.npmjs.com/package/raj-spa)
 [![Build Status](https://travis-ci.org/andrejewski/raj-spa.svg?branch=master)](https://travis-ci.org/andrejewski/raj-spa)
+[![Greenkeeper badge](https://badges.greenkeeper.io/andrejewski/raj-spa.svg)](https://greenkeeper.io/)
 
 ## Usage
 
