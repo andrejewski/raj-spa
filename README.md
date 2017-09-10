@@ -13,7 +13,7 @@ npm install raj-spa
 
 ```js
 import spa from 'raj-spa'
-import {program} from 'raj/react'
+import {program} from 'raj-react'
 import React from 'react'
 
 import router, {Route} from './router'
@@ -52,7 +52,7 @@ export default program(React.Component, () => spa({
 
 ## Documentation
 
-The `raj-spa` package exports a single function which takes the following arguments and returns a `RajProgram` configuration which can plug into `raj/react` or another Raj program.
+The `raj-spa` package exports a single function which takes the following arguments and returns a `RajProgram` configuration which can plug into `raj-react` or another Raj program.
 
 #### Required configuration
 
@@ -112,7 +112,7 @@ interface ViewContainerModel {
 Yes, Raj SPA is unaware of any particular URL-based routing. You can define a "headless" router that emits routes you pick.
 
 #### Server-side rendering?
-If you are using React, the `raj/react` bindings return a React Component that works with [`ReactDOMServer`](https://facebook.github.io/react/docs/react-dom-server.html) to get started.
+If you are using React, the `raj-react` bindings return a React Component that works with [`ReactDOMServer`](https://facebook.github.io/react/docs/react-dom-server.html) to get started.
 
 More advanced/experimental strategies exist to increase performance and content delivery, but I won't give advice until I try them out myself.
 
