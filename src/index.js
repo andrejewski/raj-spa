@@ -2,8 +2,8 @@ const tag = require('tagmeme')
 const {mapEffect, batchEffects} = require('raj-compose')
 
 const Result = (function () {
-  const Err = tag()
-  const Ok = tag()
+  const Err = tag('Err')
+  const Ok = tag('Ok')
   const Result = tag.union([Err, Ok])
   Result.Err = Err
   Result.Ok = Ok
@@ -32,10 +32,10 @@ function spa ({
   errorProgram,
   containerView
 }) {
-  const GetRoute = tag()
-  const GetCancel = tag()
-  const GetProgram = tag()
-  const ProgramMsg = tag()
+  const GetRoute = tag('GetRoute')
+  const GetCancel = tag('GetCancel')
+  const GetProgram = tag('GetProgram')
+  const ProgramMsg = tag('ProgramMsg')
   const Msg = tag.union([
     GetRoute,
     GetCancel,
