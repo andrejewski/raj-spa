@@ -33,12 +33,10 @@ function spa ({
   containerView
 }) {
   const GetRoute = tag('GetRoute')
-  const GetCancel = tag('GetCancel')
   const GetProgram = tag('GetProgram')
   const ProgramMsg = tag('ProgramMsg')
   const Msg = tag.union([
     GetRoute,
-    GetCancel,
     GetProgram,
     ProgramMsg
   ])
@@ -48,14 +46,18 @@ function spa ({
       initialProgramModel,
       initialProgramEffect
     ] = initialProgram.init
+    const {
+      effect: routerEffect,
+      cancel: routerCancel
+    } = router.subscribe(GetRoute)
     const model = {
-      routerCancel: null,
+      routerCancel,
       isTransitioning: false,
       currentProgram: initialProgram,
       programModel: initialProgramModel
     }
     const effect = batchEffects([
-      router.subscribe(GetRoute, GetCancel),
+      routerEffect,
       mapEffect(initialProgramEffect, ProgramMsg)
     ])
     return [model, effect]
@@ -75,6 +77,11 @@ function spa ({
     if (subDone) {
       subDone = subDone(model.programModel)
     }
+    if (subDone) {
+      // Do not expose dispatch to subDone
+      const _subDone = subDone
+      subDone = () => _subDone()
+    }
     const newEffect = batchEffects([
       subDone,
       mapEffect(newProgramEffect, ProgramMsg)
@@ -89,7 +96,6 @@ function spa ({
         const newModel = {...model, isTransitioning: true}
         return [newModel, loadProgram(newProgram, GetProgram)]
       },
-      GetCancel, routerCancel => [{...model, routerCancel}],
       GetProgram, program => {
         const newModel = {...model, isTransitioning: false}
         return Result.match(program, [
@@ -132,8 +138,8 @@ function spa ({
 
   function done (model) {
     let subDone = model.currentProgram.done
-    if (done) {
-      subDone = subDone(model.page)
+    if (subDone) {
+      subDone = subDone(model.programModel)
     }
 
     return batchEffects([

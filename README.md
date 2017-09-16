@@ -85,15 +85,20 @@ interface RajProgram {
 ##### `RajRouter`
 Raj SPA will work with any router that is compatible with the following interface. Note that Raj Spa makes no assumption about the underlying navigation rules. Choices, such as push-state or hash-state, are all encapsulated by the router.
 
-```
+```ts
 interface RajRouter {
-  subscribe: function(routeMsg, cancelMsg);
+  subscribe (routeMsg: (route: any) => RouteMsg): {
+    effect: (dispatch: (message: RouteMsg) => void) => void,
+    cancel: () => void
+  };
 }
 ```
 
-The `routeMsg` is a function which wraps the `route` which goes to `getRouteProgram(route)`. The `cancelMsg` is a function which wraps the `cancellation` function which is a function. When the `cancellation` function calls, route changes should stop dispatching.
+The `routeMsg` is a function which wraps the `route` which goes to `getRouteProgram(route)`. `RouteMsg` is internal to `spa`; do not rely on its value.
 
-Note: this `subscribe` method is an effect so it will receive `dispatch` which it will call with `dispatch(routeMsg(route))` and `dispatch(cancelMsg(cancel))` at the appropriate times.
+The `effect` method is an effect so it will receive `dispatch` which it will call with `dispatch(routeMsg(route))` at the appropriate times.
+
+The `cancel` method cancels the subscription to route changes. When the `cancel` function calls, route changes should stop dispatching.
 
 Note: `route` can be anything that your `getRouteProgram` understands.
 
@@ -121,21 +126,26 @@ Here's a simple hash-change router implementation.
 
 ```js
 export default {
-  subscribe (routeMsg, cancelMsg) {
-    return function (dispatch) {
-      function emitHash () {
-        dispatch(routeMsg(window.location.hash))
+  subscribe (routeMsg) {
+    let dispatchFn
+    function listener () {
+      if (dispatchFn) {
+        dispatchFn(routeMsg(window.location.hash))
       }
-
-      window.addEventListener('hashchange', emitHash)
-
-      function cancel () {
-        window.removeEventListener('hashchange', emitHash)
-      }
-
-      dispatch(cancelMsg(cancel))
-      emitHash()
     }
+
+    function effect (dispatch) {
+      dispatchFn = dispatch
+      window.addEventListener('hashchange', listener)
+      listener() // dispatch initial route
+    }
+
+    function cancel () {
+      window.removeEventListener('hashchange', listener)
+      dispatchFn = undefined
+    }
+
+    return {effect, cancel}
   }
 }
 ```

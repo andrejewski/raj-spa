@@ -10,7 +10,10 @@ const noopProgram = {
 
 const noopRouter = {
   subscribe () {
-    return () => {}
+    return {
+      effect: () => {},
+      cancel: () => {}
+    }
   }
 }
 
@@ -28,15 +31,14 @@ test('spa should return a new program', t => {
 
 test('spa should subscribe to the router', t => {
   const router = {
-    subscribe (routeMsg, cancelMsg) {
+    subscribe (routeMsg) {
       t.is(typeof routeMsg, 'function')
-      t.is(typeof cancelMsg, 'function')
 
-      return dispatch => {
-        t.is(typeof dispatch, 'function')
-
-        const cancel = () => {}
-        dispatch(cancelMsg(cancel))
+      return {
+        cancel () {},
+        effect: dispatch => {
+          t.is(typeof dispatch, 'function')
+        }
       }
     }
   }
@@ -48,4 +50,30 @@ test('spa should subscribe to the router', t => {
       return noopProgram
     }
   }))
+})
+
+test('spa should unsubscribe from the router when the runtime is killed', t => {
+  return new Promise(resolve => {
+    const router = {
+      subscribe (routeMsg) {
+        return {
+          effect: dispatch => {},
+          cancel () {
+            t.pass()
+            resolve()
+          }
+        }
+      }
+    }
+
+    const kill = program(spa({
+      router,
+      initialProgram: noopProgram,
+      getRouteProgram () {
+        return noopProgram
+      }
+    }))
+
+    kill()
+  })
 })
