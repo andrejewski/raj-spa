@@ -139,13 +139,12 @@ function spa ({
   function done (model) {
     let subDone = model.currentProgram.done
     if (subDone) {
-      subDone = subDone(model.programModel)
+      subDone(model.programModel)
     }
 
-    return batchEffects([
-      model.routerCancel,
-      subDone
-    ])
+    if (model.routerCancel) {
+      model.routerCancel()
+    }
   }
 
   return {init, update, view, done}
