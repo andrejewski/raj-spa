@@ -16,28 +16,29 @@ import spa from 'raj-spa'
 import {program} from 'raj-react'
 import React from 'react'
 
-import router, {Route} from './router'
+import router from './router'
 import homepage from './pages/home'
 
 function getRouteProgram (route) {
-  // NOTE: I use tagmeme here cuz I like it best
-  return Route.match(route, [
+  if (route === '/') {
     // Static program routing
-    Route.Home, () => homepage,
+    return homepage
+  }
 
+  if (route.startsWith('/users/')) {
     // Dynamic, code-split routing (using ES6 import())
     // i.e. you can return a promise which resolves a program
-    Route.User, userId =>
-      System.import('./pages/user').then(page => page.default(userId)),
+    const userId = route.split('/').pop()
+    return System.import('./pages/user.js').then(page => page.default(userId))
+  }
 
-    // 404
-    () => System.import('./pages/not-found')
-  ])
+  // 404
+  return System.import('./pages/not-found.js')
 }
 
 const initialProgram = {
   init: [],
-  update () { return [] },
+  update: () => [],
   view () {
     return <p>Loading application...</p>
   }
@@ -59,22 +60,22 @@ The `raj-spa` package exports a single function which takes the following argume
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | `router` | `RajRouter` | The router to which the SPA will subscribe.
-| `getRouteProgram` | `route => RajProgram` | The mapping from routes to programs which receives a route and returns a `RajProgram` or a Promise that resolves as `RajProgram`.
+| `getRouteProgram` | `route => RajProgram` | The mapping from routes to programs which receives a route and returns a `RajProgram` or a Promise that resolves a `RajProgram`.
 | `initialProgram` | `RajProgram` | The initial program used before the first received route from the router resolves. The transition to the first route's program should be instantaneous if a static program returns from `getRouteProgram`.
 
 #### Optional configuration
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `errorProgram` | `Error => RajProgram` | The program to use when a program rejects with an error. `errorProgram` receives the error and returns a `RajProgram`.
+| `errorProgram` | `Error => RajProgram` | The program used when loading a program rejects with an error. `errorProgram` receives the error and returns a `RajProgram`.
 | `viewContainer` | function | A container view which wraps the entire application. The function will receive a `ViewContainerModel` and the sub program's `view` result to encapsulate.
 
 #### Types
 
 ##### `RajProgram`
-This is a normal Raj configuration.
+This is a normal Raj program.
 
-```
+```ts
 interface RajProgram {
   init: [model, effect];
   update: function(msg, state);
@@ -87,16 +88,14 @@ Raj SPA will work with any router that is compatible with the following interfac
 
 ```ts
 interface RajRouter {
-  subscribe (routeMsg: (route: any) => RouteMsg): {
-    effect: (dispatch: (message: RouteMsg) => void) => void,
+  subscribe (): {
+    effect: (dispatch: (message: any) => void) => void,
     cancel: () => void
   };
 }
 ```
 
-The `routeMsg` is a function which wraps the `route` which goes to `getRouteProgram(route)`. `RouteMsg` is internal to `spa`; do not rely on its value.
-
-The `effect` method is an effect so it will receive `dispatch` which it will call with `dispatch(routeMsg(route))` at the appropriate times.
+The `effect` method is an effect so it will receive `dispatch` which it will call with `dispatch(route)` at the appropriate times.
 
 The `cancel` method cancels the subscription to route changes. When the `cancel` function calls, route changes should stop dispatching.
 
@@ -105,7 +104,7 @@ Note: `route` can be anything that your `getRouteProgram` understands.
 ##### `ViewContainerModel`
 The `viewContainer` function receives this object.
 
-```
+```ts
 interface ViewContainerModel {
   isTransitioning: boolean;
 }
@@ -122,30 +121,22 @@ If you are using React, the `raj-react` bindings return a React Component that w
 More advanced/experimental strategies exist to increase performance and content delivery, but I won't give advice until I try them out myself.
 
 #### Are there any routers I can steal?
-Here's a simple hash-change router implementation.
+Here is a hash-change router implementation.
 
 ```js
 export default {
-  subscribe (routeMsg) {
-    let dispatchFn
-    function listener () {
-      if (dispatchFn) {
-        dispatchFn(routeMsg(window.location.hash))
+  subscribe () {
+    let listener
+    return {
+      effect (dispatch) {
+        listener = () => dispatch(window.location.hash)
+        window.addEventListener('hashchange', listener)
+        listener() // dispatch initial route
+      },
+      cancel () {
+        window.removeEventListener('hashchange', listener)
       }
     }
-
-    function effect (dispatch) {
-      dispatchFn = dispatch
-      window.addEventListener('hashchange', listener)
-      listener() // dispatch initial route
-    }
-
-    function cancel () {
-      window.removeEventListener('hashchange', listener)
-      dispatchFn = undefined
-    }
-
-    return {effect, cancel}
   }
 }
 ```

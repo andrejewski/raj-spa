@@ -1,14 +1,7 @@
 const tag = require('tagmeme')
 const {mapEffect, batchEffects} = require('raj-compose')
 
-const Result = (function () {
-  const Err = tag('Err')
-  const Ok = tag('Ok')
-  const Result = tag.union([Err, Ok])
-  Result.Err = Err
-  Result.Ok = Ok
-  return Result
-})()
+const Result = tag.namedUnion(['Ok', 'Err'])
 
 function loadProgram (program, programMsg) {
   return function (dispatch) {
@@ -32,14 +25,16 @@ function spa ({
   errorProgram,
   containerView
 }) {
-  const GetRoute = tag('GetRoute')
-  const GetProgram = tag('GetProgram')
-  const ProgramMsg = tag('ProgramMsg')
-  const Msg = tag.union([
+  const Msg = tag.namedUnion([
+    'GetRoute',
+    'GetProgram',
+    'ProgramMsg'
+  ])
+  const {
     GetRoute,
     GetProgram,
     ProgramMsg
-  ])
+  } = Msg
 
   const init = (() => {
     const [
@@ -49,7 +44,7 @@ function spa ({
     const {
       effect: routerEffect,
       cancel: routerCancel
-    } = router.subscribe(GetRoute)
+    } = router.subscribe()
     const model = {
       routerCancel,
       isTransitioning: false,
@@ -57,13 +52,13 @@ function spa ({
       programModel: initialProgramModel
     }
     const effect = batchEffects([
-      routerEffect,
+      mapEffect(routerEffect, GetRoute),
       mapEffect(initialProgramEffect, ProgramMsg)
     ])
     return [model, effect]
   })()
 
-  function transitionToProgram (model, program, props) {
+  function transitionToProgram (model, program) {
     const [
       newProgramModel,
       newProgramEffect
