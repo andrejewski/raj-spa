@@ -30,26 +30,27 @@ test('spa should return a new program', t => {
 })
 
 test('spa should subscribe to the router', t => {
-  const router = {
-    subscribe (routeMsg) {
-      t.is(typeof routeMsg, 'function')
-
-      return {
-        cancel () {},
-        effect: dispatch => {
-          t.is(typeof dispatch, 'function')
+  return new Promise(resolve => {
+    const router = {
+      subscribe () {
+        return {
+          cancel () {},
+          effect: dispatch => {
+            t.is(typeof dispatch, 'function')
+            resolve()
+          }
         }
       }
     }
-  }
 
-  program(spa({
-    router,
-    initialProgram: noopProgram,
-    getRouteProgram () {
-      return noopProgram
-    }
-  }))
+    program(spa({
+      router,
+      initialProgram: noopProgram,
+      getRouteProgram () {
+        return noopProgram
+      }
+    }))
+  })
 })
 
 test('spa should unsubscribe from the router when the runtime is killed', t => {
