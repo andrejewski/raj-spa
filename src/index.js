@@ -1,7 +1,7 @@
-const tag = require('tagmeme')
+const {union} = require('tagmeme')
 const {mapEffect, batchEffects} = require('raj-compose')
 
-const Result = tag.namedUnion(['Ok', 'Err'])
+const Result = union(['Ok', 'Err'])
 
 function loadProgram (program, programMsg) {
   return function (dispatch) {
@@ -25,7 +25,7 @@ function spa ({
   errorProgram,
   containerView
 }) {
-  const Msg = tag.namedUnion([
+  const Msg = union([
     'GetRoute',
     'GetProgram',
     'ProgramMsg'
@@ -85,13 +85,13 @@ function spa ({
   }
 
   function update (msg, model) {
-    return Msg.match(msg, [
-      GetRoute, route => {
+    return Msg.match(msg, {
+      GetRoute: route => {
         const newProgram = getRouteProgram(route)
         const newModel = {...model, isTransitioning: true}
         return [newModel, loadProgram(newProgram, GetProgram)]
       },
-      GetProgram, program => {
+      GetProgram: program => {
         const newModel = {...model, isTransitioning: false}
         return Result.match(program, [
           Result.Ok, program => transitionToProgram(newModel, program),
@@ -105,7 +105,7 @@ function spa ({
           }
         ])
       },
-      ProgramMsg, msg => {
+      ProgramMsg: msg => {
         const [
           newProgramModel,
           newProgramEffect
@@ -114,7 +114,7 @@ function spa ({
         const newEffect = mapEffect(newProgramEffect, ProgramMsg)
         return [newModel, newEffect]
       }
-    ])
+    })
   }
 
   function view (model, dispatch) {
