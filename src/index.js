@@ -3,15 +3,15 @@ const {mapEffect, batchEffects} = require('raj-compose')
 
 const Result = union(['Ok', 'Err'])
 
-function loadProgram (program, programMsg) {
+function loadProgram (program) {
   return function (dispatch) {
     const isPromise = !!(program.then && program.catch)
     if (!isPromise) {
-      return dispatch(programMsg(Result.Ok(program)))
+      return dispatch(Result.Ok(program))
     }
     return program
-      .then(program => dispatch(programMsg(Result.Ok(program))))
-      .catch(error => dispatch(programMsg(Result.Err(error))))
+      .then(program => dispatch(Result.Ok(program)))
+      .catch(error => dispatch(Result.Err(error)))
   }
 }
 
@@ -89,13 +89,13 @@ function spa ({
       GetRoute: route => {
         const newProgram = getRouteProgram(route)
         const newModel = {...model, isTransitioning: true}
-        return [newModel, loadProgram(newProgram, GetProgram)]
+        return [newModel, mapEffect(loadProgram(newProgram), GetProgram)]
       },
       GetProgram: program => {
         const newModel = {...model, isTransitioning: false}
-        return Result.match(program, [
-          Result.Ok, program => transitionToProgram(newModel, program),
-          Result.Err, error => {
+        return Result.match(program, {
+          Ok: program => transitionToProgram(newModel, program),
+          Err: error => {
             if (errorProgram) {
               const program = errorProgram(error)
               return transitionToProgram(newModel, program)
@@ -103,7 +103,7 @@ function spa ({
             console.error(error)
             return [model]
           }
-        ])
+        })
       },
       ProgramMsg: msg => {
         const [
