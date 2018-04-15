@@ -1,7 +1,11 @@
 const {union} = require('tagmeme')
 const {mapEffect, batchEffects} = require('raj-compose')
-
-const Result = union(['Ok', 'Err'])
+const {
+  Result,
+  selfManaged,
+  isSelfManaged,
+  createEmitter
+} = require('./utils')
 
 function loadProgram (program) {
   return function (dispatch) {
@@ -30,11 +34,6 @@ function spa ({
     'GetProgram',
     'ProgramMsg'
   ])
-  const {
-    GetRoute,
-    GetProgram,
-    ProgramMsg
-  } = Msg
 
   const init = (() => {
     const [
@@ -47,13 +46,15 @@ function spa ({
     } = router.subscribe()
     const model = {
       routerCancel,
+      routeEmitter: null,
       isTransitioning: false,
       currentProgram: initialProgram,
+      programKey: null,
       programModel: initialProgramModel
     }
     const effect = batchEffects([
-      mapEffect(routerEffect, GetRoute),
-      mapEffect(initialProgramEffect, ProgramMsg)
+      mapEffect(routerEffect, Msg.GetRoute),
+      mapEffect(initialProgramEffect, Msg.ProgramMsg)
     ])
     return [model, effect]
   })()
@@ -68,18 +69,12 @@ function spa ({
       currentProgram: program,
       programModel: newProgramModel
     }
-    let subDone = model.currentProgram.done
-    if (subDone) {
-      subDone = subDone(model.programModel)
-    }
-    if (subDone) {
-      // Do not expose dispatch to subDone
-      const _subDone = subDone
-      subDone = () => _subDone()
-    }
+    const subDone = model.currentProgram.done
     const newEffect = batchEffects([
-      subDone,
-      mapEffect(newProgramEffect, ProgramMsg)
+      subDone
+        ? () => subDone(model.programModel)
+        : undefined,
+      mapEffect(newProgramEffect, Msg.ProgramMsg)
     ])
     return [newModel, newEffect]
   }
@@ -87,9 +82,30 @@ function spa ({
   function update (msg, model) {
     return Msg.match(msg, {
       GetRoute: route => {
-        const newProgram = getRouteProgram(route)
-        const newModel = {...model, isTransitioning: true}
-        return [newModel, mapEffect(loadProgram(newProgram), GetProgram)]
+        let programKey = null
+        let routeEmitter = null
+        let newProgram = getRouteProgram(route, { selfManaged })
+        if (isSelfManaged(newProgram)) {
+          const { key, makeProgram } = newProgram
+          const isContinuation = model.programKey && model.programKey === key
+          if (isContinuation) {
+            return [model, () => model.routeEmitter.emit(route)]
+          }
+
+          programKey = key
+          routeEmitter = createEmitter()
+          newProgram = makeProgram(routeEmitter.subscribe)
+        }
+
+        return [
+          {
+            ...model,
+            programKey,
+            routeEmitter,
+            isTransitioning: true
+          },
+          mapEffect(loadProgram(newProgram), Msg.GetProgram)
+        ]
       },
       GetProgram: program => {
         const newModel = {...model, isTransitioning: false}
@@ -111,7 +127,7 @@ function spa ({
           newProgramEffect
         ] = model.currentProgram.update(msg, model.programModel)
         const newModel = {...model, programModel: newProgramModel}
-        const newEffect = mapEffect(newProgramEffect, ProgramMsg)
+        const newEffect = mapEffect(newProgramEffect, Msg.ProgramMsg)
         return [newModel, newEffect]
       }
     })
@@ -120,7 +136,7 @@ function spa ({
   function view (model, dispatch) {
     const subView = model.currentProgram.view(
       model.programModel,
-      x => dispatch(ProgramMsg(x))
+      x => dispatch(Msg.ProgramMsg(x))
     )
 
     if (containerView) {

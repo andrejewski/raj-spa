@@ -110,6 +110,30 @@ interface ViewContainerModel {
 }
 ```
 
+### Self-managed programs and nested SPAs
+By default, every URL change will trigger a `getRouteProgram()`.
+This means the current program will be torn down and the next program set up.
+For a minor change like in query params, this can be expensive, lose useful state, and thrash the view.
+Programs that can resolve these route changes can be thought of as *self-managed programs*.
+If the program is the same between `getRouteProgram` calls, we pass down the route change to the program to handle.
+
+```js
+function getRouteProgram (route, { selfManaged }) {
+  if (route === '/simple-page') {
+    return simpleProgram
+  }
+  if (route.startsWith('/nested-spa')) {
+    return selfManaged(
+      'my-nested-spa',
+      routeSubscription => nestedSpa(routeSubscription)
+    )
+  }
+}
+```
+
+The `selfManaged` function takes an arbitrary value which is used for program equality and the function which will be called to set up the program.
+That function receives a subscription which it can watch for route changes.
+
 ### Questions
 
 #### Does this work with React Native?
