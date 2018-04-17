@@ -1,8 +1,7 @@
-import { createEmitter } from '../src/utils'
-
 const test = require('ava')
 const spa = require('../src')
-const {program} = require('raj/runtime')
+const { program } = require('raj/runtime')
+const { createEmitter } = require('../src/utils')
 
 const noopProgram = {
   init: [],

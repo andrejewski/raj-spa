@@ -1,5 +1,5 @@
-import { createEmitter } from '../src/utils'
-import test from 'ava'
+const test = require('ava')
+const { createEmitter } = require('../src/utils')
 
 test('createEmitter should prime added listeners', t => {
   const emitter = createEmitter({})
