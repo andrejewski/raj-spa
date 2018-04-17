@@ -81,8 +81,8 @@ test('spa should unsubscribe from the router when the runtime is killed', t => {
   })
 })
 
-function createTestRouter () {
-  return createEmitter()
+function createTestRouter (options) {
+  return createEmitter(options)
 }
 
 function createTestProgram (model) {
@@ -103,7 +103,7 @@ test('spa should reuse self-managed programs', async t => {
   */
   t.plan(1)
 
-  const router = createTestRouter()
+  const router = createTestRouter({ initialValue: '/foo' })
   const initialProgram = createTestProgram('initial')
   const childProgram = createTestProgram('child')
 
@@ -117,20 +117,17 @@ test('spa should reuse self-managed programs', async t => {
           resolve()
         }
 
-        return selfManaged('child-key', rs => {
-          t.is(typeof rs, 'function', 'Route subscription should be a function')
+        return selfManaged('child-key', router => {
+          t.is(typeof router.subscribe, 'function', 'router.subscribe should be a function')
           return childProgram
         })
       }
     }))
 
     tick(() => {
-      router.emit('/foo')
+      router.emit('/bar')
       tick(() => {
-        router.emit('/bar')
-        tick(() => {
-          router.emit('/baz')
-        })
+        router.emit('/baz')
       })
     })
   })
@@ -139,11 +136,11 @@ test('spa should reuse self-managed programs', async t => {
 })
 
 test('spa should emit routes for self-managed programs', async t => {
-  const router = createTestRouter()
+  const router = createTestRouter({ initialValue: '/foo' })
   const initialProgram = createTestProgram('initial')
   const history = []
-  const getChildProgram = routeSubscription => {
-    const sub = routeSubscription()
+  const getChildProgram = router => {
+    const sub = router.subscribe()
     const init = [
       { cancel: sub.cancel },
       sub.effect
@@ -171,17 +168,14 @@ test('spa should emit routes for self-managed programs', async t => {
 
   await new Promise(resolve => {
     tick(() => {
-      router.emit('/foo')
+      router.emit('/bar')
       tick(() => {
-        router.emit('/bar')
-        tick(() => {
-          router.emit('/baz')
-          tick(resolve)
-        })
+        router.emit('/baz')
+        tick(resolve)
       })
     })
   })
 
   kill()
-  t.deepEqual(history, ['/bar', '/baz'])
+  t.deepEqual(history, ['/foo', '/bar', '/baz'])
 })

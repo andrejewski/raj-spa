@@ -2,18 +2,15 @@ const {union} = require('tagmeme')
 const {mapEffect, batchEffects} = require('raj-compose')
 const {
   Result,
+  isPromise,
   selfManaged,
   isSelfManaged,
   createEmitter
 } = require('./utils')
 
-function loadProgram (program) {
+function loadProgram (programPromise) {
   return function (dispatch) {
-    const isPromise = !!(program.then && program.catch)
-    if (!isPromise) {
-      return dispatch(Result.Ok(program))
-    }
-    return program
+    return programPromise
       .then(program => dispatch(Result.Ok(program)))
       .catch(error => dispatch(Result.Err(error)))
   }
@@ -93,8 +90,15 @@ function spa ({
           }
 
           programKey = key
-          routeEmitter = createEmitter()
-          newProgram = makeProgram(routeEmitter.subscribe)
+          const { subscribe } = routeEmitter = createEmitter({ initialValue: route })
+          newProgram = makeProgram({ subscribe })
+        }
+
+        if (!isPromise(newProgram)) {
+          return transitionToProgram(
+            { ...model, programKey, routeEmitter },
+            newProgram
+          )
         }
 
         return [
@@ -107,9 +111,9 @@ function spa ({
           mapEffect(loadProgram(newProgram), Msg.GetProgram)
         ]
       },
-      GetProgram: program => {
+      GetProgram: result => {
         const newModel = {...model, isTransitioning: false}
-        return Result.match(program, {
+        return Result.match(result, {
           Ok: program => transitionToProgram(newModel, program),
           Err: error => {
             if (errorProgram) {

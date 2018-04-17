@@ -2,6 +2,10 @@ const { union } = require('tagmeme')
 
 const Result = union(['Ok', 'Err'])
 
+function isPromise (value) {
+  return value && (value.then && value.catch)
+}
+
 function selfManaged (key, makeProgram) {
   return { _isSelfManaged: true, key, makeProgram }
 }
@@ -10,9 +14,11 @@ function isSelfManaged (program) {
   return program && program._isSelfManaged
 }
 
-function createEmitter (listeners = []) {
+function createEmitter ({ listeners = [], initialValue }) {
+  let lastValue = initialValue
   return {
     emit (value) {
+      lastValue = value
       listeners.forEach(l => l(value))
     },
     subscribe () {
@@ -22,6 +28,7 @@ function createEmitter (listeners = []) {
           if (!listener) {
             listener = dispatch
             listeners.push(listener)
+            listener(lastValue)
           }
         },
         cancel () {
@@ -33,6 +40,7 @@ function createEmitter (listeners = []) {
 }
 
 exports.Result = Result
+exports.isPromise = isPromise
 exports.selfManaged = selfManaged
 exports.isSelfManaged = isSelfManaged
 exports.createEmitter = createEmitter
