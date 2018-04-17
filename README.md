@@ -115,7 +115,7 @@ By default, every URL change will trigger a `getRouteProgram()`.
 This means the current program will be torn down and the next program set up.
 For a minor change like in query params, this can be expensive, lose useful state, and thrash the view.
 Programs that can resolve these route changes can be thought of as *self-managed programs*.
-If the program is the same between `getRouteProgram` calls, we pass down the route change to the program to handle.
+If the program is the same between `getRouteProgram` calls, we pass down a `RajRouter` to the program. The program can subscribe to routes emitted from this router.
 
 ```js
 function getRouteProgram (route, { selfManaged }) {
@@ -125,7 +125,7 @@ function getRouteProgram (route, { selfManaged }) {
   if (route.startsWith('/nested-spa')) {
     return selfManaged(
       'my-nested-spa',
-      routeSubscription => nestedSpa(routeSubscription)
+      router => nestedSpa(router)
     )
   }
 }
