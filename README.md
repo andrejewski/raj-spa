@@ -110,29 +110,23 @@ interface ViewContainerModel {
 }
 ```
 
-### Self-managed programs and nested SPAs
-By default, every URL change will trigger a `getRouteProgram()`.
-This means the current program will be torn down and the next program set up.
-For a minor change like in query params, this can be expensive, lose useful state, and thrash the view.
-Programs that can resolve these route changes can be thought of as *self-managed programs*.
-If the program is the same between `getRouteProgram` calls, we pass down a `RajRouter` to the program. The program can subscribe to routes emitted from this router.
+### Keyed programs and nested SPAs
+By default, every emitted route causes the teardown of the current program and the set up of the next program.
+For a minor change in query params or a major change in pages that share programs(s), this can lose useful state and thrash the view.
+To preserve a program between route changes, we wrap that program in `keyed`.
 
 ```js
-function getRouteProgram (route, { selfManaged }) {
+function getRouteProgram (route, { keyed }) {
   if (route === '/simple-page') {
     return simpleProgram
   }
   if (route.startsWith('/nested-spa')) {
-    return selfManaged(
-      'my-nested-spa',
-      router => nestedSpa(router)
-    )
+    return keyed('my-key', router => nestedSpa(router))
   }
 }
 ```
 
-The `selfManaged` function takes an arbitrary value which is used for program equality and the function which will be called to set up the program.
-That function receives a subscription which it can watch for route changes.
+The `keyed` function takes a `key` and function to call to get the program. The `key` can be any truthy value, which will be compared with the previous key (or lack thereof) using `===` strict equality. If the `key` is the same between `getRouteProgram` calls, the program is preserved. In order to respond to route changes within a keyed program, the `keyed` function is passed a `RajRouter` which emits routes and can be subscribed to by the program.
 
 ### Questions
 

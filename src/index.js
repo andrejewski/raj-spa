@@ -3,8 +3,8 @@ const {mapEffect, batchEffects} = require('raj-compose')
 const {
   Result,
   isPromise,
-  selfManaged,
-  isSelfManaged,
+  keyed,
+  isKeyed,
   createEmitter
 } = require('./utils')
 
@@ -81,8 +81,8 @@ function spa ({
       GetRoute: route => {
         let programKey = null
         let routeEmitter = null
-        let newProgram = getRouteProgram(route, { selfManaged })
-        if (isSelfManaged(newProgram)) {
+        let newProgram = getRouteProgram(route, { keyed })
+        if (isKeyed(newProgram)) {
           const { key, makeProgram } = newProgram
           const isContinuation = model.programKey && model.programKey === key
           if (isContinuation) {

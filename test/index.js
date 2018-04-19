@@ -96,7 +96,7 @@ const tick = fn => setTimeout(fn, 0)
 
 test('spa should reuse self-managed programs', async t => {
   /*
-    The selfManaged(key, makeProgram) makeProgram function
+    The keyed(key, makeProgram) makeProgram function
       should only be called once and is then reused for
       any route that gets emitted.
   */
@@ -111,12 +111,12 @@ test('spa should reuse self-managed programs', async t => {
     kill = program(spa({
       router,
       initialProgram,
-      getRouteProgram (route, { selfManaged }) {
+      getRouteProgram (route, { keyed }) {
         if (route === '/baz') {
           resolve()
         }
 
-        return selfManaged('child-key', router => {
+        return keyed('child-key', router => {
           t.is(typeof router.subscribe, 'function', 'router.subscribe should be a function')
           return childProgram
         })
@@ -160,8 +160,8 @@ test('spa should emit routes for self-managed programs', async t => {
   const kill = program(spa({
     router,
     initialProgram,
-    getRouteProgram (route, { selfManaged }) {
-      return selfManaged('child-key', getChildProgram)
+    getRouteProgram (route, { keyed }) {
+      return keyed('child-key', getChildProgram)
     }
   }))
 

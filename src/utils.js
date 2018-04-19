@@ -6,11 +6,11 @@ function isPromise (value) {
   return value && (value.then && value.catch)
 }
 
-function selfManaged (key, makeProgram) {
+function keyed (key, makeProgram) {
   return { _isSelfManaged: true, key, makeProgram }
 }
 
-function isSelfManaged (program) {
+function isKeyed (program) {
   return program && program._isSelfManaged
 }
 
@@ -41,6 +41,6 @@ function createEmitter ({ listeners = [], initialValue }) {
 
 exports.Result = Result
 exports.isPromise = isPromise
-exports.selfManaged = selfManaged
-exports.isSelfManaged = isSelfManaged
+exports.keyed = keyed
+exports.isKeyed = isKeyed
 exports.createEmitter = createEmitter
