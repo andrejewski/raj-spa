@@ -1,6 +1,7 @@
 const test = require('ava')
 const spa = require('../src')
-const {program} = require('raj/runtime')
+const { program } = require('raj/runtime')
+const { createEmitter } = require('../src/utils')
 
 const noopProgram = {
   init: [],
@@ -77,4 +78,103 @@ test('spa should unsubscribe from the router when the runtime is killed', t => {
 
     kill()
   })
+})
+
+function createTestRouter (options) {
+  return createEmitter(options)
+}
+
+function createTestProgram (model) {
+  return {
+    init: [model],
+    update: (msg, model) => [model],
+    view: () => {}
+  }
+}
+
+const tick = fn => setTimeout(fn, 0)
+
+test('spa should reuse self-managed programs', async t => {
+  /*
+    The keyed(key, makeProgram) makeProgram function
+      should only be called once and is then reused for
+      any route that gets emitted.
+  */
+  t.plan(1)
+
+  const router = createTestRouter({ initialValue: '/foo' })
+  const initialProgram = createTestProgram('initial')
+  const childProgram = createTestProgram('child')
+
+  let kill
+  await new Promise(resolve => {
+    kill = program(spa({
+      router,
+      initialProgram,
+      getRouteProgram (route, { keyed }) {
+        if (route === '/baz') {
+          resolve()
+        }
+
+        return keyed('child-key', router => {
+          t.is(typeof router.subscribe, 'function', 'router.subscribe should be a function')
+          return childProgram
+        })
+      }
+    }))
+
+    tick(() => {
+      router.emit('/bar')
+      tick(() => {
+        router.emit('/baz')
+      })
+    })
+  })
+
+  kill()
+})
+
+test('spa should emit routes for self-managed programs', async t => {
+  const router = createTestRouter({ initialValue: '/foo' })
+  const initialProgram = createTestProgram('initial')
+  const history = []
+  const getChildProgram = router => {
+    const sub = router.subscribe()
+    const init = [
+      { cancel: sub.cancel },
+      sub.effect
+    ]
+
+    function update (msg, model) {
+      history.push(msg)
+      return [model]
+    }
+
+    function done (model) {
+      model.cancel()
+    }
+
+    return { init, update, done, view: () => {} }
+  }
+
+  const kill = program(spa({
+    router,
+    initialProgram,
+    getRouteProgram (route, { keyed }) {
+      return keyed('child-key', getChildProgram)
+    }
+  }))
+
+  await new Promise(resolve => {
+    tick(() => {
+      router.emit('/bar')
+      tick(() => {
+        router.emit('/baz')
+        tick(resolve)
+      })
+    })
+  })
+
+  kill()
+  t.deepEqual(history, ['/foo', '/bar', '/baz'])
 })

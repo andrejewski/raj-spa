@@ -110,6 +110,24 @@ interface ViewContainerModel {
 }
 ```
 
+### Keyed programs and nested SPAs
+By default, every emitted route causes the teardown of the current program and the set up of the next program.
+For a minor change in query params or a major change in pages that share programs(s), this can lose useful state and thrash the view.
+To preserve a program between route changes, we wrap that program in `keyed`.
+
+```js
+function getRouteProgram (route, { keyed }) {
+  if (route === '/simple-page') {
+    return simpleProgram
+  }
+  if (route.startsWith('/nested-spa')) {
+    return keyed('my-key', router => nestedSpa(router))
+  }
+}
+```
+
+The `keyed` function takes a `key` and function to call to get the program. The `key` can be any truthy value, which will be compared with the previous key (or lack thereof) using `===` strict equality. If the `key` is the same between `getRouteProgram` calls, the program is preserved. In order to respond to route changes within a keyed program, the `keyed` function is passed a `RajRouter` which emits routes and can be subscribed to by the program.
+
 ### Questions
 
 #### Does this work with React Native?

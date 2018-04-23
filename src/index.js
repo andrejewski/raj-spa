@@ -1,15 +1,16 @@
 const {union} = require('tagmeme')
 const {mapEffect, batchEffects} = require('raj-compose')
+const {
+  Result,
+  isPromise,
+  keyed,
+  isKeyed,
+  createEmitter
+} = require('./utils')
 
-const Result = union(['Ok', 'Err'])
-
-function loadProgram (program) {
+function loadProgram (programPromise) {
   return function (dispatch) {
-    const isPromise = !!(program.then && program.catch)
-    if (!isPromise) {
-      return dispatch(Result.Ok(program))
-    }
-    return program
+    return programPromise
       .then(program => dispatch(Result.Ok(program)))
       .catch(error => dispatch(Result.Err(error)))
   }
@@ -30,11 +31,6 @@ function spa ({
     'GetProgram',
     'ProgramMsg'
   ])
-  const {
-    GetRoute,
-    GetProgram,
-    ProgramMsg
-  } = Msg
 
   const init = (() => {
     const [
@@ -47,13 +43,15 @@ function spa ({
     } = router.subscribe()
     const model = {
       routerCancel,
+      routeEmitter: null,
       isTransitioning: false,
       currentProgram: initialProgram,
+      programKey: null,
       programModel: initialProgramModel
     }
     const effect = batchEffects([
-      mapEffect(routerEffect, GetRoute),
-      mapEffect(initialProgramEffect, ProgramMsg)
+      mapEffect(routerEffect, Msg.GetRoute),
+      mapEffect(initialProgramEffect, Msg.ProgramMsg)
     ])
     return [model, effect]
   })()
@@ -68,18 +66,12 @@ function spa ({
       currentProgram: program,
       programModel: newProgramModel
     }
-    let subDone = model.currentProgram.done
-    if (subDone) {
-      subDone = subDone(model.programModel)
-    }
-    if (subDone) {
-      // Do not expose dispatch to subDone
-      const _subDone = subDone
-      subDone = () => _subDone()
-    }
+    const subDone = model.currentProgram.done
     const newEffect = batchEffects([
-      subDone,
-      mapEffect(newProgramEffect, ProgramMsg)
+      subDone
+        ? () => subDone(model.programModel)
+        : undefined,
+      mapEffect(newProgramEffect, Msg.ProgramMsg)
     ])
     return [newModel, newEffect]
   }
@@ -87,13 +79,41 @@ function spa ({
   function update (msg, model) {
     return Msg.match(msg, {
       GetRoute: route => {
-        const newProgram = getRouteProgram(route)
-        const newModel = {...model, isTransitioning: true}
-        return [newModel, mapEffect(loadProgram(newProgram), GetProgram)]
+        let programKey = null
+        let routeEmitter = null
+        let newProgram = getRouteProgram(route, { keyed })
+        if (isKeyed(newProgram)) {
+          const { key, makeProgram } = newProgram
+          const isContinuation = model.programKey && model.programKey === key
+          if (isContinuation) {
+            return [model, () => model.routeEmitter.emit(route)]
+          }
+
+          programKey = key
+          const { subscribe } = routeEmitter = createEmitter({ initialValue: route })
+          newProgram = makeProgram({ subscribe })
+        }
+
+        if (!isPromise(newProgram)) {
+          return transitionToProgram(
+            { ...model, programKey, routeEmitter },
+            newProgram
+          )
+        }
+
+        return [
+          {
+            ...model,
+            programKey,
+            routeEmitter,
+            isTransitioning: true
+          },
+          mapEffect(loadProgram(newProgram), Msg.GetProgram)
+        ]
       },
-      GetProgram: program => {
+      GetProgram: result => {
         const newModel = {...model, isTransitioning: false}
-        return Result.match(program, {
+        return Result.match(result, {
           Ok: program => transitionToProgram(newModel, program),
           Err: error => {
             if (errorProgram) {
@@ -111,7 +131,7 @@ function spa ({
           newProgramEffect
         ] = model.currentProgram.update(msg, model.programModel)
         const newModel = {...model, programModel: newProgramModel}
-        const newEffect = mapEffect(newProgramEffect, ProgramMsg)
+        const newEffect = mapEffect(newProgramEffect, Msg.ProgramMsg)
         return [newModel, newEffect]
       }
     })
@@ -120,7 +140,7 @@ function spa ({
   function view (model, dispatch) {
     const subView = model.currentProgram.view(
       model.programModel,
-      x => dispatch(ProgramMsg(x))
+      x => dispatch(Msg.ProgramMsg(x))
     )
 
     if (containerView) {
