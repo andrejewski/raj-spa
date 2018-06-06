@@ -44,13 +44,15 @@ test('spa should subscribe to the router', t => {
       }
     }
 
-    program(spa({
-      router,
-      initialProgram: noopProgram,
-      getRouteProgram () {
-        return noopProgram
-      }
-    }))
+    program(
+      spa({
+        router,
+        initialProgram: noopProgram,
+        getRouteProgram () {
+          return noopProgram
+        }
+      })
+    )
   })
 })
 
@@ -68,13 +70,15 @@ test('spa should unsubscribe from the router when the runtime is killed', t => {
       }
     }
 
-    const kill = program(spa({
-      router,
-      initialProgram: noopProgram,
-      getRouteProgram () {
-        return noopProgram
-      }
-    }))
+    const kill = program(
+      spa({
+        router,
+        initialProgram: noopProgram,
+        getRouteProgram () {
+          return noopProgram
+        }
+      })
+    )
 
     kill()
   })
@@ -108,20 +112,26 @@ test('spa should reuse self-managed programs', async t => {
 
   let kill
   await new Promise(resolve => {
-    kill = program(spa({
-      router,
-      initialProgram,
-      getRouteProgram (route, { keyed }) {
-        if (route === '/baz') {
-          resolve()
-        }
+    kill = program(
+      spa({
+        router,
+        initialProgram,
+        getRouteProgram (route, { keyed }) {
+          if (route === '/baz') {
+            resolve()
+          }
 
-        return keyed('child-key', router => {
-          t.is(typeof router.subscribe, 'function', 'router.subscribe should be a function')
-          return childProgram
-        })
-      }
-    }))
+          return keyed('child-key', router => {
+            t.is(
+              typeof router.subscribe,
+              'function',
+              'router.subscribe should be a function'
+            )
+            return childProgram
+          })
+        }
+      })
+    )
 
     tick(() => {
       router.emit('/bar')
@@ -140,10 +150,7 @@ test('spa should emit routes for self-managed programs', async t => {
   const history = []
   const getChildProgram = router => {
     const sub = router.subscribe()
-    const init = [
-      { cancel: sub.cancel },
-      sub.effect
-    ]
+    const init = [{ cancel: sub.cancel }, sub.effect]
 
     function update (msg, model) {
       history.push(msg)
@@ -157,13 +164,15 @@ test('spa should emit routes for self-managed programs', async t => {
     return { init, update, done, view: () => {} }
   }
 
-  const kill = program(spa({
-    router,
-    initialProgram,
-    getRouteProgram (route, { keyed }) {
-      return keyed('child-key', getChildProgram)
-    }
-  }))
+  const kill = program(
+    spa({
+      router,
+      initialProgram,
+      getRouteProgram (route, { keyed }) {
+        return keyed('child-key', getChildProgram)
+      }
+    })
+  )
 
   await new Promise(resolve => {
     tick(() => {
