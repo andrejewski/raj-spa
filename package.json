@@ -24,7 +24,7 @@
     "babel-preset-stage-3": "^6.24.1",
     "fixpack": "^2.3.1",
     "prettier": "^1.13.4",
-    "raj": "0.0.11",
+    "raj": "0.0.12",
     "standard": "^11.0.0"
   },
   "files": [
