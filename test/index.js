@@ -1,6 +1,6 @@
 const test = require('ava')
 const spa = require('../src')
-const { program } = require('raj/runtime')
+const { runtime } = require('raj')
 const { createEmitter } = require('../src/utils')
 
 const noopProgram = {
@@ -44,7 +44,7 @@ test('spa should subscribe to the router', t => {
       }
     }
 
-    program(
+    runtime(
       spa({
         router,
         initialProgram: noopProgram,
@@ -70,7 +70,7 @@ test('spa should unsubscribe from the router when the runtime is killed', t => {
       }
     }
 
-    const kill = program(
+    const kill = runtime(
       spa({
         router,
         initialProgram: noopProgram,
@@ -112,7 +112,7 @@ test('spa should reuse self-managed programs', async t => {
 
   let kill
   await new Promise(resolve => {
-    kill = program(
+    kill = runtime(
       spa({
         router,
         initialProgram,
@@ -164,7 +164,7 @@ test('spa should emit routes for self-managed programs', async t => {
     return { init, update, done, view: () => {} }
   }
 
-  const kill = program(
+  const kill = runtime(
     spa({
       router,
       initialProgram,
