@@ -68,7 +68,7 @@ The `raj-spa` package exports a single function which takes the following argume
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | `errorProgram` | `Error => RajProgram` | The program used when loading a program rejects with an error. `errorProgram` receives the error and returns a `RajProgram`.
-| `viewContainer` | function | A container view which wraps the entire application. The function will receive a `ViewContainerModel` and the sub program's `view` result to encapsulate.
+| `containerView` | function | A container view which wraps the entire application. The function will receive a `ContainerViewModel` and the sub program's `view` result to encapsulate.
 
 #### Types
 
@@ -101,11 +101,11 @@ The `cancel` method cancels the subscription to route changes. When the `cancel`
 
 Note: `route` can be anything that your `getRouteProgram` understands.
 
-##### `ViewContainerModel`
-The `viewContainer` function receives this object.
+##### `ContainerViewModel`
+The `containerView` function receives this object.
 
 ```ts
-interface ViewContainerModel {
+interface ContainerViewModel {
   isTransitioning: boolean;
 }
 ```
@@ -165,7 +165,7 @@ I recommend using something on top of this like [`tagmeme`](https://github.com/a
 Use `containerView` to describe all the universal parts of your app.
 
 ```js
-export function containerView (viewContainerModel, subView) {
+export function containerView (containerViewModel, subView) {
   return <div>
     <header>...</header>
     <main>{subView}</main>
