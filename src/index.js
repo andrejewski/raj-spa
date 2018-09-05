@@ -102,7 +102,7 @@ function spa ({
               return transitionToProgram(newModel, program)
             }
             console.error(error)
-            return [model]
+            return [newModel]
           }
         })
       },
