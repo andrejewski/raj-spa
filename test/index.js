@@ -187,3 +187,71 @@ test('spa should emit routes for self-managed programs', async t => {
   kill()
   t.deepEqual(history, ['/foo', '/bar', '/baz'])
 })
+
+test('spa should use errorProgram if loading fails', t => {
+  const router = createTestRouter({ initialValue: '/foo' })
+  const initialProgram = createTestProgram('initial')
+  const failError = new Error('Load fail')
+
+  return new Promise(resolve => {
+    let isError = false
+    const viewValue = 'cake'
+    const program = spa({
+      router,
+      initialProgram,
+      getRouteProgram () {
+        return Promise.reject(failError)
+      },
+      errorProgram (error) {
+        t.is(error, failError)
+        isError = true
+        return {
+          init: [],
+          update () {},
+          view: () => viewValue
+        }
+      },
+      containerView ({ isTransitioning }, view) {
+        if (isError) {
+          t.is(isTransitioning, false)
+          t.is(view, 'cake')
+          kill()
+          resolve()
+        }
+      }
+    })
+
+    const kill = runtime(program)
+  })
+})
+
+test('spa should no-op for load errors if there is no errorProgram', t => {
+  t.plan(2)
+
+  const router = createTestRouter({ initialValue: '/foo' })
+  const initialProgram = createTestProgram('initial')
+  const failError = new Error('Load fail')
+
+  const oldConsoleError = console.error
+  console.error = error => t.is(error, failError)
+
+  return new Promise(resolve => {
+    const program = spa({
+      router,
+      initialProgram,
+      getRouteProgram () {
+        return Promise.reject(failError)
+      },
+      containerView ({ isTransitioning }) {
+        if (!isTransitioning) {
+          t.is(isTransitioning, false)
+          kill()
+          console.error = oldConsoleError
+          resolve()
+        }
+      }
+    })
+
+    const kill = runtime(program)
+  })
+})
