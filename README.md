@@ -67,7 +67,7 @@ The `raj-spa` package exports a single function which takes the following argume
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `errorProgram` | `Error => RajProgram` | The program used when loading a program rejects with an error. `errorProgram` receives the error and returns a `RajProgram`.
+| `getErrorProgram` | `Error => RajProgram` | The program used when loading a program rejects with an error. `getErrorProgram` receives the error and returns a `RajProgram`.
 | `containerView` | function | A container view which wraps the entire application. The function will receive a `ContainerViewModel` and the sub program's `view` result to encapsulate.
 
 #### Types

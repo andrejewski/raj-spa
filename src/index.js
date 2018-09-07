@@ -13,14 +13,16 @@ function loadProgram (programPromise) {
 function spa ({
   // required
   router,
-  getRouteProgram,
   initialProgram,
+  getRouteProgram,
 
   // optional
-  errorProgram,
+  getErrorProgram,
+  errorProgram, // Deprecated
   containerView
 }) {
   const Msg = union(['GetRoute', 'GetProgram', 'ProgramMsg'])
+  getErrorProgram = getErrorProgram || errorProgram
 
   const init = (() => {
     const [initialProgramModel, initialProgramEffect] = initialProgram.init
@@ -97,8 +99,8 @@ function spa ({
         return Result.match(result, {
           Ok: program => transitionToProgram(newModel, program),
           Err: error => {
-            if (errorProgram) {
-              const program = errorProgram(error)
+            if (getErrorProgram) {
+              const program = getErrorProgram(error)
               return transitionToProgram(newModel, program)
             }
             console.error(error)

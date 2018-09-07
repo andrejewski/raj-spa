@@ -188,7 +188,7 @@ test('spa should emit routes for self-managed programs', async t => {
   t.deepEqual(history, ['/foo', '/bar', '/baz'])
 })
 
-test('spa should use errorProgram if loading fails', t => {
+test('spa should use getErrorProgram if loading fails', t => {
   const router = createTestRouter({ initialValue: '/foo' })
   const initialProgram = createTestProgram('initial')
   const failError = new Error('Load fail')
@@ -202,7 +202,7 @@ test('spa should use errorProgram if loading fails', t => {
       getRouteProgram () {
         return Promise.reject(failError)
       },
-      errorProgram (error) {
+      getErrorProgram (error) {
         t.is(error, failError)
         isError = true
         return {
@@ -225,7 +225,7 @@ test('spa should use errorProgram if loading fails', t => {
   })
 })
 
-test('spa should no-op for load errors if there is no errorProgram', t => {
+test('spa should no-op for load errors if there is no getErrorProgram', t => {
   t.plan(2)
 
   const router = createTestRouter({ initialValue: '/foo' })
